@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Panel de Reglajes Industrial Pro</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Reglajes">
+    
+    <style>
+        /* PALETA INDUSTRIAL TRADICIONAL (Alto contraste, amigable para planta) */
+        :root {
+            --bg-pantalla: #1a1a1a;       /* Gris oscuro de fondo general */
+            --bg-bloque: #2d2d2d;         /* Gris medio para los paneles */
+            --bg-input: #111111;          /* Fondo negro para las casillas de datos */
+            --borde-industrial: #444444;  /* Bordes bien definidos */
+            --texto-principal: #ffffff;   /* Texto blanco estándar */
+            --texto-unidades: #ffcc00;    /* Amarillo brillante para °C, RPM, % */
+            --azul-seleccion: #007aff;    /* Azul estándar para botones activos */
+            --verde-guardar: #28a745;     /* Verde botón guardar */
+            --rojo-borrar: #dc3545;       /* Rojo botón peligro */
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: var(--bg-pantalla);
+            color: var(--texto-principal);
+            margin: 0;
+            padding: 0;
+            padding-bottom: 50px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Encabezado Principal */
+        .encabezado {
+            background-color: #000000;
+            padding: 15px 20px;
+            border-bottom: 3px solid var(--azul-seleccion);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .encabezado h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .contador-registros {
+            background-color: #333333;
+            border: 1px solid #555555;
+            color: #ffffff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* Títulos de Sección Estilo Tablero Eléctrico */
+        .titulo-seccion {
+            font-size: 14px;
+            color: #ffffff;
+            background-color: #333333;
+            padding: 6px 15px;
+            margin-top: 20px;
+            margin-bottom: 0;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-top: 1px solid var(--borde-industrial);
+            border-bottom: 1px solid var(--borde-industrial);
+        }
+
+        /* Tarjetas / Bloques de Parámetros */
+        .bloque-parametros {
+            background-color: var(--bg-bloque);
+            padding: 5px 15px;
+            border-bottom: 1px solid var(--borde-industrial);
+        }
+
+        /* Filas de Datos Estándar */
+        .fila-dato {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 48px;
+            border-bottom: 1px solid #3c3c3c;
+            padding: 4px 0;
+        }
+
+        .fila-dato:last-child {
+            border-bottom: none;
+        }
+
+        .fila-dato label {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--texto-principal);
+            max-width: 50%;
+        }
+
+        /* Selectores de Botones Grandes (Segmentados) */
+        .selector-industrial {
+            display: flex;
+            background-color: #111111;
+            border: 1px solid #555555;
+            border-radius: 6px;
+            padding: 2px;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .selector-industrial button {
+            flex: 1;
+            border: none;
+            background: none;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #aaaaaa;
+            cursor: pointer;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        .selector-industrial button.active {
+            background-color: var(--azul-seleccion);
+            color: #ffffff;
+        }
+
+        /* Cuadrícula de Diámetros Clásica */
+        .cuadricula-diametros {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            padding: 10px 0;
+        }
+
+        .cuadricula-diametros button {
+            background-color: #222222;
+            border: 1px solid #555555;
+            padding: 12px 0;
+            font-size: 15px;
+            font-weight: bold;
+            color: #ffffff;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .cuadricula-diametros button.active {
+            background-color: var(--azul-seleccion);
+            border-color: var(--azul-seleccion);
+        }
+
+        /* Contenedor de Entrada de Datos (Input + Unidad) */
+        .entrada-numerica {
+            display: flex;
+            align-items: center;
+            background-color: var(--bg-input);
+            border: 1px solid #555555;
+            border-radius: 6px;
+            padding: 6px 10px;
+            width: 140px;
+            justify-content: space-between;
+        }
+
+        .entrada-numerica input {
+            border: none;
+            outline: none;
+            background: transparent;
+            color: #ffffff;
+            font-size: 17px;
+            font-weight: bold;
+            width: 75px;
+            text-align: right;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Unidades de alto contraste en amarillo */
+        .entrada-numerica .unidad {
+            color: var(--texto-unidades);
+            font-size: 14px;
+            font-weight: bold;
+            width: 35px;
+            text-align: left;
+            margin-left: 5px;
+        }
+
+        /* Botones de Operación en Planta */
+        .btn-anadir-celda {
+            background-color: #3a3a3a;
+            color: #ffffff;
+            border: 1px solid #555555;
+            border-radius: 6px;
+            padding: 12px;
+            width: 100%;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+
+        .btn-borrar-fila {
+            background: none;
+            border: none;
+            color: var(--rojo-borrar);
+            font-size: 20px;
+            cursor: pointer;
+            padding-left: 10px;
+        }
+
+        /* Panel de Acciones Finales Inferiores */
+        .bloque-botones-finales {
+            padding: 20px 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn-guardar-historial {
+            background-color: var(--verde-guardar);
+            color: #ffffff;
+            border: 1px solid #1e7e34;
+            border-radius: 8px;
+            padding: 15px 0;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .btn-descargar-excel {
+            background-color: var(--azul-seleccion);
+            color: #ffffff;
+            border: 1px solid #0062cc;
+            border-radius: 8px;
+            padding: 15px 0;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .btn-purgar-datos {
+            background: none;
+            border: none;
+            color: #888888;
+            font-size: 13px;
+            text-decoration: underline;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="encabezado">
+        <h1>Hoja de Reglajes</h1>
+        <div class="contador-registros" id="regCounter">Registros: 0</div>
+    </div>
+
+    <form id="ajustesForm" onsubmit="guardarEnHistorial(event)">
+        
+        <div class="titulo-seccion">Línea de Extrusión</div>
+        <div class="bloque-parametros">
+            <div class="fila-dato">
+                <label>LÍNEA ACTIVA</label>
+                <div class="selector-industrial" id="segLinea">
+                    <button type="button" onclick="setSegmented('Linea', 'LH1')" class="active">LH1</button>
+                    <button type="button" onclick="setSegmented('Linea', 'LH2')">LH2</button>
+                    <button type="button" onclick="setSegmented('Linea', 'LH3')">LH3</button>
+                    <button type="button" onclick="setSegmented('Linea', 'CLT4')">CLT4</button>
+                    <button type="button" onclick="setSegmented('Linea', 'CLT5')">CLT5</button>
+                    <button type="button" onclick="setSegmented('Linea', 'CLA6')">CLA6</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="titulo-seccion">Materia Prima Utilizada</div>
+        <div class="bloque-parametros">
+            <div class="fila-dato" style="flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px 0;">
+                <label>POLÍMERO PA6</label>
+                <div class="selector-industrial" id="segPolimero" style="width: 100%;">
+                    <button type="button" onclick="setSegmented('Polimero', 'Alphalon 36')" class="active">Alphalon 36</button>
+                    <button type="button" onclick="setSegmented('Polimero', 'HY-3400A')">HY-3400A</button>
+                </div>
+            </div>
+            <div class="fila-dato" style="flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px 0;">
+                <label>COPOLÍMERO PA6/6.6</label>
+                <div class="selector-industrial" id="segCopolimero" style="width: 100%;">
+                    <button type="button" onclick="setSegmented('Copolimero', '5030MTX1')" class="active">5030MTX1</button>
+                    <button type="button" onclick="setSegmented('Copolimero', 'HYG-440')">HYG-440</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="titulo-seccion">Receta de Dosificación</div>
+        <div class="bloque-parametros">
+            <div class="fila-dato" style="flex-direction: column; align-items: flex-start; gap: 8px; padding: 10px 0;">
+                <label>MEZCLA DE MATERIAL</label>
+                <div class="selector-industrial" id="segDosificacion" style="width: 100%;">
+                    <button type="button" onclick="setSegmented('Dosificacion', '85% + 15%')" class="active">85% + 15%</button>
+                    <button type="button" onclick="setSegmented('Dosificacion', '70% + 30%')">70% + 30%</button>
+                    <button type="button" onclick="setSegmented('Dosificacion', '50% + 50%')">50% + 50%</button>
+                    <button type="button" onclick="setSegmented('Dosificacion', '65% + 15% + 20%')">65% + 15% + 20%</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="titulo-seccion">Especificación del Perfil</div>
+        <div class="bloque-parametros">
+            <div class="fila-dato">
+                <label>TIPO PERFIL</label>
+                <div class="selector-industrial" id="segPerfil">
+                    <button type="button" onclick="setSegmented('Perfil', 'CA')" class="active">CA</button>
+                    <button type="button" onclick="setSegmented('Perfil', 'RO')">RO</button>
+                    <button type="button" onclick="setSegmented('Perfil', 'HE')">HE</button>
+                    <button type="button" onclick="setSegmented('Perfil', 'ET')">ET</button>
+                    <button type="button" onclick="setSegmented('Perfil', 'ON')">ON</button>
+                </div>
+            </div>
+            <div class="fila-dato" style="flex-direction: column; align-items: flex-start; padding: 10px 0;">
+                <label>DIÁMETRO NOMINAL</label>
+                <div class="cuadricula-diametros" id="gridDiametro" style="width:100%;"></div>
+            </div>
+            <div class="fila-dato">
+                <label>NÚMERO DE HILOS</label>
+                <div class="selector-industrial" id="segHilos">
+                    <button type="button" onclick="setSegmented('Hilos', '1')" class="active">1</button>
+                    <button type="button" onclick="setSegmented('Hilos', '2')">2</button>
+                    <button type="button" onclick="setSegmented('Hilos', '4')">4</button>
+                    <button type="button" onclick="setSegmented('Hilos', '6')">6</button>
+                    <button type="button" onclick="setSegmented('Hilos', '8')">8</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="titulo-seccion">Módulo Coex</div>
+        <div class="bloque-parametros">
+            <div class="fila-dato">
+                <label>¿TIENE COEX?</label>
+                <div class="selector-industrial" id="segCoex">
+                    <button type="button" onclick="toggleCoex('Sí')">SÍ</button>
+                    <button type="button" onclick="toggleCoex('No')" class="active">NO</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="panelCoex" class="hidden">
+            <div class="bloque-parametros">
+                <div class="fila-dato"><label>Velocidad COEX</label><div class="entrada-numerica"><input type="number" step="any" id="vCoex"><span class="unit">RPM</span></div></div>
+                <div class="fila-dato"><label>Zona 1</label><div class="entrada-numerica"><input type="number" id="cxZ1"><span class="unit">°C</span></div></div>
+                <div class="fila-dato"><label>Zona 2</label><div class="entrada-numerica"><input type="number" id="cxZ2"><span class="unit">°C</span></div></div>
+                <div class="fila-dato"><label>Zona 3</label><div class="entrada-numerica"><input type="number" id="cxZ3"><span class="unit">°C</span></div></div>
+                <div class="fila-dato"><label>Zona 4</label><div class="entrada-numerica"><input type="number" id="cxZ4"><span class="unit">°C</span></div></div>
+                <div class="fila-dato"><label>Zona A</label><div class="entrada-numerica"><input type="number" id="cxZA"><span class="unit">°C</span></div></div>
+                <div class="fila-dato"><label>Zona B</label><div class="entrada-numerica"><input type="number" id="cxZB"><span class="unit">°C</span></div></div>
+            </div>
+        </div>
+
+        <div class="titulo-seccion">Extrusora 1</div>
+        <div class="bloque-parametros">
+            <div class="fila-dato"><label>Velocidad Extrusora 1</label><div class="entrada-numerica"><input type="number" step="any" id="vExt1"><span class="unit">RPM</span></div></div>
+            <div class="fila-dato"><label>Porcentaje Capro 1</label><div class="entrada-numerica"><input type="number" step="0.001" id="cExt1"><span class="unit">%</span></div></div>
+            <div class="fila-dato"><label>Zona 1</label><div class="entrada-numerica"><input type="number" id="e1z1"><span class="unit">°C</span></div></div>
+            <div class="fila-dato"><label>Zona 2</label><div class="entrada-numerica"><input type="number" id="e1z2"><span class="unit">°C</span></div></div>
+            <div class="fila-dato"><label>Zona 3</label><div class="entrada-numerica"><input type="number" id="e1z3"><span class="unit">°C</span></div></div>
+            <div class="fila-dato"><label>Zona 4</label><div class="entrada-numerica"><input type="number" id="e1z4"><span class="unit">°C</span></div></div>
+            <div class="fila-dato"><label>Zona A</label><div class="entrada-numerica"><input type="number" id="e1za"><span class="unit">°C</span></div></div>
+            <div class="fila-dato"><label>Zona B</label><div class="entrada-numerica"><input type="number" id="e1zb"><span class="unit">°C</span></div></div>
+            <div class="fila-dato"><label>Zona C (Cabezal)</label><div class="entrada-numerica"><input type="number" id="e1zc"><span class="unit">°C</span></div></div>
+        </div>
+
+        <div class="titulo-seccion">Extrusora 2 Auxiliar</div>
+        <div class="bloque-parametros">
+            <div class="fila-dato">
+                <label>¿AGREGAR EXTRUSORA 2?</label>
+                <div class="selector-industrial" id="segExt2">
+                    <button type="button" onclick="toggleExt2('Sí')">SÍ</button>
+                    <button type="button" onclick="toggleExt2('No')" class="active">NO</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="panelExt2" class="hidden">
+            <div class="bloque-parametros">
+                <div class="fila-dato"><label>Velocidad Extrusora 2</label><div class="entrada-numerica"><input type="number" step="any" id="vExt2"><span class="unit">RPM</span></div></div>
+                <div class="fila-dato"><label>Porcentaje Capro 2</label><div class="entrada-numerica"><input type="number" step="0.001" id="cExt2"><span class="unit">%</span></div></div>
+                <div class="fila-dato"><label>Zona 1</label><div class="entrada-numerica"><input type="number" id="e2z1"><span class="unit">°C</span></div></div>
+                <div class="fila-dato"><label>Zona 2</label><div class="entrada-numerica"><input type="number" id="e2z2"><span class="unit">°C</span></div></div>
+                <div class="fila-dato"><label>Zona 3</label><div class="entrada-numerica"><input type="number" id="e2z3"><span class="unit">°C</span></div></div>
+                <div class="fila-dato"><label>Zona 4</label><div class="entrada-numerica"><input type="number" id="e2z4"><span class="unit">°C</span></div></div>
+                <div class="fila-dato"><label>Zona A</label><div class="entrada-numerica"><input type="number" id="e2za"><span class="unit">°C</span></div></div>
+                <div class="fila-dato"><label>Zona B</label><div class="entrada-numerica"><input type="number" id="e2zb"><span class="unit">°C</span></div></div>
+                <div class="fila-dato"><label>Zona C (Cabezal)</label><div class="entrada-numerica"><input type="number" id="e2zc"><span class="unit">°C</span></div></div>
+            </div>
+        </div>
+
+        <div class="titulo-seccion">Dosificación de Aditivos</div>
+        <div class="bloque-parametros">
+            <div class="fila-dato"><label>Colorante</label><div class="entrada-numerica"><input type="number" step="0.001" id="aditColorante" placeholder="0.000"><span class="unit">%</span></div></div>
+            <div class="fila-dato"><label>Cera</label><div class="entrada-numerica"><input type="number" step="0.001" id="aditCera" placeholder="0.000"><span class="unit">%</span></div></div>
+        </div>
+
+        <div class="titulo-seccion">Configuración de Bancos</div>
+        <div class="bloque-parametros">
+            <div class="fila-dato">
+                <label>DISTRIBUCIÓN PLANTA</label>
+                <div class="selector-industrial" id="segConfigBancos">
+                    <button type="button" onclick="toggleConfigBancos('Solo un lado')" class="active">Lado Único / Gral</button>
+                    <button type="button" onclick="toggleConfigBancos('Derecho + Izquierdo')">Duplex (Der + Izq)</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="titulo-seccion" id="tituloBloqueDer">Control de Bancos</div>
+        <div class="bloque-parametros">
+            <div id="contenedorBancosDer"></div>
+            <button type="button" class="btn-anadir-celda" onclick="agregarBanco('Der')">＋ Añadir Fila de Banco</button>
+            <div class="fila-dato"><label id="lblEstDer">Estiraje</label><div class="entrada-numerica"><input type="number" step="any" id="estDer"><span class="unit">m/m</span></div></div>
+            <div class="fila-dato"><label id="lblRetDer">Retracto</label><div class="entrada-numerica"><input type="number" step="any" id="retDer"><span class="unit">%</span></div></div>
+        </div>
+
+        <div id="panelBancosIzq" class="hidden">
+            <div class="titulo-seccion">Banco Izquierdo</div>
+            <div class="bloque-parametros">
+                <div id="contenedorBancosIzq"></div>
+                <button type="button" class="btn-anadir-celda" onclick="agregarBanco('Izq')">＋ Añadir Fila Izquierda</button>
+                <div class="fila-dato"><label>Estiraje Izquierdo</label><div class="entrada-numerica"><input type="number" step="any" id="estIzq"><span class="unit">m/m</span></div></div>
+                <div class="fila-dato"><label>Retracto Izquierdo</label><div class="entrada-numerica"><input type="number" step="any" id="retIzq"><span class="unit">%</span></div></div>
+            </div>
+        </div>
+
+        <div class="titulo-seccion" id="tituloHornos">Control de Hornos</div>
+        <div class="bloque-parametros">
+            <div class="fila-dato"><label id="lblHeT1">Horno Estiraje T1</label><div class="entrada-numerica"><input type="number" id="heT1Der"><span class="unit">°C</span></div></div>
+            <div class="fila-dato"><label id="lblHeT2">Horno Estiraje T2</label><div class="entrada-numerica"><input type="number" id="heT2Der"><span class="unit">°C</span></div></div>
+            <div class="fila-dato"><label id="lblHrT1">Horno Retracto T1</label><div class="entrada-numerica"><input type="number" id="hrT1Der"><span class="unit">°C</span></div></div>
+            <div class="fila-dato"><label id="lblHrT2">Horno Retracto T2</label><div class="entrada-numerica"><input type="number" id="hrT2Der"><span class="unit">°C</span></div></div>
+        </div>
+
+        <div id="panelHornosIzq" class="hidden">
+            <div class="titulo-seccion">Hornos Lado Izquierdo</div>
+            <div class="bloque-parametros">
+                <div class="fila-dato"><label>H. Estiraje T1</label><div class="entrada-numerica"><input type="number" id="heT1Izq"><span class="unit">°C</span></div></div>
+                <div class="fila-dato"><label>H. Estiraje T2</label><div class="entrada-numerica"><input type="number" id="heT2Izq"><span class="unit">°C</span></div></div>
+                <div class="fila-dato"><label>H. Retracto T1</label><div class="entrada-numerica"><input type="number" id="hrT1Izq"><span class="unit">°C</span></div></div>
+                <div class="fila-dato"><label>H. Retracto T2</label><div class="entrada-numerica"><input type="number" id="hrT2Izq"><span class="unit">°C</span></div></div>
+            </div>
+        </div>
+
+        <div class="bloque-botones-finales">
+            <button type="submit" class="btn-guardar-historial">💾 Guardar Ajuste en Memoria</button>
+            <button type="button" class="btn-descargar-excel" onclick="descargarExcelMaestro()">📥 Descargar Planilla Excel Completa</button>
+            <center>
+                <button type="button" class="btn-purgar-datos" onclick="borrarHistorial()">⚠️ Vaciar Almacenamiento Local</button>
+            </center>
+        </div>
+    </form>
+
+    <script>
+        let registrosHistoricos = JSON.parse(localStorage.getItem('planilla_reglajes_historicos')) || [];
+        let datos = { Linea: 'LH1', Polimero: 'Alphalon 36', Copolimero: '5030MTX1', Dosificacion: '85% + 15%', Perfil: 'CA', Diametro: '160', Hilos: '1', Coex: 'No', Ext2: 'No', ConfigBancos: 'Solo un lado' };
+        
+        let listaBancosDer = ["", "", ""];
+        let listaBancosIzq = ["", "", ""];
+        const opcionesDiametro = ["160", "180", "200", "240", "270", "300", "330", "350", "400", "450"];
+
+        function actualizarContador() {
+            document.getElementById('regCounter').innerText = `Registros: ${registrosHistoricos.length}`;
+        }
+        actualizarContador();
+
+        const gridDom = document.getElementById('gridDiametro');
+        opcionesDiametro.forEach(d => {
+            let btn = document.createElement('button');
+            btn.type = 'button';
+            btn.innerText = d;
+            btn.id = "btnDia_" + d;
+            if(d === '160') btn.className = 'active';
+            btn.onclick = () => {
+                opcionesDiametro.forEach(x => {
+                    const el = document.getElementById("btnDia_"+x);
+                    if(el) el.classList.remove('active');
+                });
+                btn.className = 'active';
+                datos.Diametro = d;
+            };
+            gridDom.appendChild(btn);
+        });
+
+        function setSegmented(campo, valor) {
+            const contenedor = document.getElementById('seg' + campo);
+            if(contenedor) {
+                Array.from(contenedor.children).forEach(btn => btn.classList.remove('active'));
+                if(window.event && window.event.target && window.event.target.tagName === 'BUTTON') {
+                    window.event.target.classList.add('active');
+                } else {
+                    Array.from(contenedor.children).forEach(btn => {
+                        if(btn.innerText === valor.toUpperCase() || btn.innerText === valor) {
+                            btn.classList.add('active');
+                        }
+                    });
+                }
+            }
+            datos[campo] = valor;
+        }
+
+        function toggleCoex(val) {
+            setSegmented('Coex', val);
+            document.getElementById('panelCoex').className = (val === 'Sí') ? '' : 'hidden';
+        }
+
+        function toggleExt2(val) {
+            setSegmented('Ext2', val);
+            document.getElementById('panelExt2').className = (val === 'Sí') ? '' : 'hidden';
+        }
+
+        function toggleConfigBancos(val) {
+            setSegmented('ConfigBancos', val);
+            datos.ConfigBancos = val;
+            
+            const esDuplex = (val === 'Derecho + Izquierdo');
+            document.getElementById('panelBancosIzq').className = esDuplex ? '' : 'hidden';
+            document.getElementById('panelHornosIzq').className = esDuplex ? '' : 'hidden';
+            
+            document.getElementById('tituloBloqueDer').innerText = esDuplex ? 'Banco Derecho' : 'Control de Bancos';
+            document.getElementById('tituloHornos').innerText = esDuplex ? 'Hornos Lado Derecho' : 'Control de Hornos';
+            document.getElementById('lblEstDer').innerText = esDuplex ? 'Estiraje Derecho' : 'Estiraje';
+            document.getElementById('lblRetDer').innerText = esDuplex ? 'Retracto Derecho' : 'Retracto';
+            
+            renderBancos('Der');
+            if(esDuplex) renderBancos('Izq');
+        }
+
+        function renderBancos(lado) {
+            const contenedor = document.getElementById('contenedorBancos' + lado);
+            if(!contenedor) return;
+            const lista = (lado === 'Der') ? listaBancosDer : listaBancosIzq;
+            contenedor.innerHTML = '';
+
+            lista.forEach((valor, index) => {
+                let row = document.createElement('div');
+                row.className = 'fila-dato';
+                
+                let txtEtiqueta = datos.ConfigBancos === 'Derecho + Izquierdo' ? `Banco ${lado} ${index+1}` : `Banco ${index+1}`;
+                row.innerHTML = `<label>${txtEtiqueta}</label>`;
+                
+                let wrapperInput = document.createElement('div');
+                wrapperInput.className = 'entrada-numerica';
+
+                let input = document.createElement('input');
+                input.type = 'number';
+                input.step = 'any';
+                input.value = valor;
+                input.oninput = (e) => { lista[index] = e.target.value.replace(',', '.'); };
+                wrapperInput.appendChild(input);
+
+                let spanUnit = document.createElement('span');
+                spanUnit.className = 'unidad';
+                spanUnit.innerText = 'm/m';
+                wrapperInput.appendChild(spanUnit);
+                
+                row.appendChild(wrapperInput);
+
+                if (index >= 3) {
+                    let btnDel = document.createElement('button');
+                    btnDel.type = 'button';
+                    btnDel.className = 'btn-borrar-fila';
+                    btnDel.innerHTML = '✕';
+                    btnDel.onclick = () => { lista.splice(index, 1); renderBancos(lado); };
+                    row.appendChild(btnDel);
+                }
+                contenedor.appendChild(row);
+            });
+        }
+
+        function agregarBanco(lado) {
+            if(lado === 'Der') listaBancosDer.push(""); else listaBancosIzq.push("");
+            renderBancos(lado);
+        }
+
+        renderBancos('Der');
+
+        function guardarEnHistorial(e) {
+            e.preventDefault();
+            
+            let vCoex = datos.Coex === 'Sí' ? (document.getElementById('vCoex').value || "0") : "N/A";
+            let cx1 = datos.Coex === 'Sí' ? (document.getElementById('cxZ1').value || "0") : "N/A";
+            let cx2 = datos.Coex === 'Sí' ? (document.getElementById('cxZ2').value || "0") : "N/A";
+            let cx3 = datos.Coex === 'Sí' ? (document.getElementById('cxZ3').value || "0") : "N/A";
+            let cx4 = datos.Coex === 'Sí' ? (document.getElementById('cxZ4').value || "0") : "N/A";
+            let cxA = datos.Coex === 'Sí' ? (document.getElementById('cxZA').value || "0") : "N/A";
+            let cxB = datos.Coex === 'Sí' ? (document.getElementById('cxZB').value || "0") : "N/A";
+
+            let ve1 = document.getElementById('vExt1').value || "0";
+            let ce1 = document.getElementById('cExt1').value || "0";
+            let e11 = document.getElementById('e1z1').value || "0";
+            let e12 = document.getElementById('e1z2').value || "0";
+            let e13 = document.getElementById('e1z3').value || "0";
+            let e14 = document.getElementById('e1z4').value || "0";
+            let e1a = document.getElementById('e1za').value || "0";
+            let e1b = document.getElementById('e1zb').value || "0";
+            let e1c = document.getElementById('e1zc').value || "0";
+
+            let ve2 = datos.Ext2 === 'Sí' ? (document.getElementById('vExt2').value || "0") : "N/A";
+            let ce2 = datos.Ext2 === 'Sí' ? (document.getElementById('cExt2').value || "0") : "N/A";
+            let e21 = datos.Ext2 === 'Sí' ? (document.getElementById('e2z1').value || "0") : "N/A";
+            let e22 = datos.Ext2 === 'Sí' ? (document.getElementById('e2z2').value || "0") : "N/A";
+            let e23 = datos.Ext2 === 'Sí' ? (document.getElementById('e2z3').value || "0") : "N/A";
+            let e24 = datos.Ext2 === 'Sí' ? (document.getElementById('e2z4').value || "0") : "N/A";
+            let e2a = datos.Ext2 === 'Sí' ? (document.getElementById('e2za').value || "0") : "N/A";
+            let e2b = datos.Ext2 === 'Sí' ? (document.getElementById('e2zb').value || "0") : "N/A";
+            let e2c = datos.Ext2 === 'Sí' ? (document.getElementById('e2zc').value || "0") : "N/A";
+
+            let col = document.getElementById('aditColorante').value || "0";
+            let cer = document.getElementById('aditCera').value || "0";
+
+            let strBancosValores = "";
+            listaBancosDer.forEach(v => { strBancosValores += (v || "0") + ";"; });
+            if(datos.ConfigBancos === 'Derecho + Izquierdo') {
+                listaBancosIzq.forEach(v => { strBancosValores += (v || "0") + ";"; });
+            }
+
+            let strAsocValores = "";
+            if(datos.ConfigBancos === 'Derecho + Izquierdo') {
+                strAsocValores = (document.getElementById('estDer').value || "0") + ";" + (document.getElementById('retDer').value || "0") + ";" + (document.getElementById('estIzq').value || "0") + ";" + (document.getElementById('retIzq').value || "0") + ";";
+            } else {
+                strAsocValores = (document.getElementById('estDer').value || "0") + ";" + (document.getElementById('retDer').value || "0") + ";";
+            }
+
+            let strHornosValores = "";
+            if(datos.ConfigBancos === 'Derecho + Izquierdo') {
+                strHornosValores = (document.getElementById('heT1Der').value || "0") + ";" + (document.getElementById('heT2Der').value || "0") + ";" + (document.getElementById('hrT1Der').value || "0") + ";" + (document.getElementById('hrT2Der').value || "0") + ";" + (document.getElementById('heT1Izq').value || "0") + ";" + (document.getElementById('heT2Izq').value || "0") + ";" + (document.getElementById('hrT1Izq').value || "0") + ";" + (document.getElementById('hrT2Izq').value || "0");
+            } else {
+                strHornosValores = (document.getElementById('heT1Der').value || "0") + ";" + (document.getElementById('heT2Der').value || "0") + ";" + (document.getElementById('hrT1Der').value || "0") + ";" + (document.getElementById('hrT2Der').value || "0");
+            }
+
+            let nuevaFila = new Date().toLocaleString() + ";" + datos.Linea + ";" + datos.Polimero + ";" + datos.Copolimero + ";" + datos.Dosificacion + ";" + datos.Perfil + ";" + datos.Diametro + ";" + datos.Hilos + ";" + datos.Coex + ";" + vCoex + ";" + cx1 + ";" + cx2 + ";" + cx3 + ";" + cx4 + ";" + cxA + ";" + cxB + ";" + ve1 + ";" + ce1 + ";" + e11 + ";" + e12 + ";" + e13 + ";" + e14 + ";" + e1a + ";" + e1b + ";" + e1c + ";" + datos.Ext2 + ";" + ve2 + ";" + ce2 + ";" + e21 + ";" + e22 + ";" + e23 + ";" + e24 + ";" + e2a + ";" + e2b + ";" + e2c + ";" + col + ";" + cer + ";" + datos.ConfigBancos + ";" + strBancosValores + strAsocValores + strHornosValores;
+
+            registrosHistoricos.push(nuevaFila);
+            localStorage.setItem('planilla_reglajes_historicos', JSON.stringify(registrosHistoricos));
+            actualizarContador();
+
+            // LIMPIEZA EFECTIVA DE LOS INPUTS EN PANTALLA
+            document.getElementById('ajustesForm').reset();
+            
+            // Re-renderizar estructuras dinamicas vacias
+            listaBancosDer = ["", "", ""];
+            listaBancosIzq = ["", "", ""];
+            renderBancos('Der');
+            
+            // Forzar volver a valores por defecto visuales
+            setSegmented('Linea', 'LH1');
+            setSegmented('Polimero', 'Alphalon 36');
+            setSegmented('Copolimero', '5030MTX1');
+            setSegmented('Dosificacion', '85% + 15%');
+            setSegmented('Perfil', 'CA');
+            setSegmented('Hilos', '1');
+            toggleCoex('No');
+            toggleExt2('No');
+            toggleConfigBancos('Solo un lado');
+            
+            // Resetear diametro a 160
+            opcionesDiametro.forEach(x => {
+                const el = document.getElementById("btnDia_"+x);
+                if(el) el.classList.remove('active');
+            });
+            const d160 = document.getElementById("btnDia_160");
+            if(d160) d160.classList.add('active');
+            datos.Diametro = '160';
+
+            alert("✅ Ajuste guardado correctamente en el historial. La pantalla se ha limpiado.");
+            window.scrollTo(0, 0);
+        }
+
+        function descargarExcelMaestro() {
+            if (registrosHistoricos.length === 0) {
+                alert("⚠️ No hay registros acumulados para exportar.");
+                return;
+            }
+
+            let encBancos = "";
+            let pfx = datos.ConfigBancos === 'Derecho + Izquierdo' ? 'Der_' : '';
+            listaBancosDer.forEach((_, i) => { encBancos += "Banco_" + pfx + (i+1) + ";"; });
+            if(datos.ConfigBancos === 'Derecho + Izquierdo') {
+                listaBancosIzq.forEach((_, i) => { encBancos += "Banco_Izq_" + (i+1) + ";"; });
+            }
+
+            let encAsoc = (datos.ConfigBancos === 'Derecho + Izquierdo') ? "Estiraje_Der;Retracto_Der;Estiraje_Izq;Retracto_Izq;" : "Estiraje;Retracto;";
+            let encHornos = (datos.ConfigBancos === 'Derecho + Izquierdo') ? "H_Estiraje_T1_Der;H_Estiraje_T2_Der;H_Retracto_T1_Der;H_Retracto_T2_Der;H_Estiraje_T1_Izq;H_Estiraje_T2_Izq;H_Retracto_T1_Izq;H_Retracto_T2_Izq\n" : "H_Estiraje_T1;H_Estiraje_T2;H_Retracto_T1;H_Retracto_T2\n";
+
+            let csvHeader = "Fecha;Linea;Polimero_PA6;Copolimero_PA6_6.6;Dosificacion;Perfil;Diametro;Cuantos_Hilos;Coex;Velocidad_Coex;Coex_Z1;Coex_Z2;Coex_Z3;Coex_Z4;Coex_ZA;Coex_ZB;Ext1_Vel;Ext1_Capro;Ext1_Z1;Ext1_Z2;Ext1_Z3;Ext1_Z4;Ext1_ZA;Ext1_ZB;Ext1_ZC;Tiene_Ext2;Ext2_Vel;Ext2_Capro;Ext2_Z1;Ext2_Z2;Ext2_Z3;Ext2_Z4;Ext2_ZA;Ext2_ZB;Ext2_ZC;Aditivo_Colorante;Aditivo_Cera;Config_Bancos;" + encBancos + encAsoc + encHornos;
+
+            let elCuerpoDelExcel = registrosHistoricos.join("\n");
+            let contenidoCompletoCSV = csvHeader + elCuerpoDelExcel;
+
+            // FIX DE DESCARGA TOTALMENTE COMPATIBLE CON WINDOWS/EXCEL Y NAVEGADORES DE RASPBERRY
+            let blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), contenidoCompletoCSV], { type: "text/csv;charset=utf-8;" });
+            let link = document.createElement("a");
+            
+            let url = URL.createObjectURL(blob);
+            link.href = url;
+            link.setAttribute("download", "Planilla_Maestra_Reglajes.csv");
+            
+            document.body.appendChild(link);
+            link.click();
+            
+            setTimeout(function() {
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            }, 100);
+        }
+
+        function borrarHistorial() {
+            if(confirm("⚠️ ¿Vaciar el historial por completo de este dispositivo?")) {
+                registrosHistoricos = [];
+                localStorage.removeItem('planilla_reglajes_historicos');
+                actualizarContador();
+                alert("Historial blanqueado.");
+            }
+        }
+    </script>
+</body>
+</html>
